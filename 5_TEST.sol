@@ -5,73 +5,90 @@ contract Assessment {
     address payable public owner;
     uint256 public balance;
 
-    event Deposit(address indexed depositor, uint256 amount);
-    event Withdraw(address indexed withdrawer, uint256 amount);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event Deposit(uint256 amount);
+    event Withdraw(uint256 amount);
+    event Multiply(uint256 amount);
+    event Add(uint256 amount);
+    event Subtract(uint256 amount);
 
-    constructor(uint256 initBalance) payable {
+    constructor(uint initBalance) payable {
         owner = payable(msg.sender);
         balance = initBalance;
     }
 
-    function getBalance() public view returns (uint256) {
+    function getBalance() public view returns(uint256){
         return balance;
     }
 
     function deposit(uint256 _amount) public payable {
-        uint256 _previousBalance = balance;
+        uint _previousBalance = balance;
 
-        // Ensure the caller is the owner
+        // make sure this is the owner
         require(msg.sender == owner, "You are not the owner of this account");
 
-        // Perform the transaction
+        // perform transaction
         balance += _amount;
 
-        // Emit the Deposit event
-        emit Deposit(msg.sender, _amount);
-
-        // Assert that the transaction completed successfully
+        // assert transaction completed successfully
         assert(balance == _previousBalance + _amount);
+
+        // emit the event
+        emit Deposit(_amount);
     }
 
-    // Custom error
+    // custom error
     error InsufficientBalance(uint256 balance, uint256 withdrawAmount);
 
     function withdraw(uint256 _withdrawAmount) public {
-        // Ensure the caller is the owner
         require(msg.sender == owner, "You are not the owner of this account");
-
-        uint256 _previousBalance = balance;
-
-        // Check if the balance is sufficient for withdrawal
+        uint _previousBalance = balance;
         if (balance < _withdrawAmount) {
-            revert InsufficientBalance(balance, _withdrawAmount);
+            revert InsufficientBalance({
+                balance: balance,
+                withdrawAmount: _withdrawAmount
+            });
         }
 
-        // Withdraw the given amount
+        // withdraw the given amount
         balance -= _withdrawAmount;
-
-        // Emit the Withdraw event
-        emit Withdraw(msg.sender, _withdrawAmount);
-
-        // Assert that the balance is correct
-        assert(balance == _previousBalance - _withdrawAmount);
+        assert(balance == (_previousBalance - _withdrawAmount));
+        emit Withdraw(_withdrawAmount);
     }
 
-    function transferOwnership(address payable _newOwner) public {
-        // Ensure the caller is the current owner
+    function multiply(uint256 _amount) public {
+        uint _previousBalance = balance;
+
+        // make sure this is the owner
         require(msg.sender == owner, "You are not the owner of this account");
+        balance *= _amount;
+        assert(balance == _previousBalance * _amount);
+        emit Multiply(_amount);
+    }
 
-        // Ensure the new owner address is valid
-        require(_newOwner != address(0), "Invalid new owner address");
+    function add(uint256 _amount) public {
+        uint _previousBalance = balance;
 
-        // Transfer ownership to the new address
-        address payable previousOwner = owner;
-        owner = _newOwner;
+        // make sure this is the owner
+        require(msg.sender == owner, "You are not the owner of this account");
+        balance += _amount;
+        assert(balance == _previousBalance + _amount);
+        emit Add(_amount);
+    }
 
-        // Emit the OwnershipTransferred event
-        emit OwnershipTransferred(previousOwner, _newOwner);
+    function subtract(uint256 _amount) public {
+        uint _previousBalance = balance;
+
+        // make sure this is the owner
+        require(msg.sender == owner, "You are not the owner of this account");
+        if (_amount > balance) {
+            revert InsufficientBalance({
+                balance: balance,
+                withdrawAmount: _amount
+            });
+        }
+
+        balance -= _amount;
+        assert(balance == _previousBalance - _amount);
+        emit Subtract(_amount);
     }
 }
-
-//coded by Rhuzz
